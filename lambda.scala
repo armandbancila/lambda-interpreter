@@ -105,7 +105,6 @@ def freeVars(term: Term): Set[String] = term match {
 }
 
 // capture avoiding substitution
-// so that alpha-conversion isn't needed
 def substitute(argument: Term, image: Term, term: Term): Term = image match {
   case Var(name) => {
     if (argument == image) term
@@ -142,8 +141,7 @@ def etaConvert(term: Term): Term = term match {
 }
 
 // repeatedly apply beta-reduction and eta-conversion
-// until a normal form is reached (if it exists)
-// leftmost conversion will always reach a nf, if it exists
+// if a nf exists for N, then iterated contraction of the leftmost redex will always reach it
 def eval(input: Term): Term = {
   val betaReduct = betaReduce(input)
   if (betaReduct != input) eval(betaReduct)
