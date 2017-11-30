@@ -72,6 +72,7 @@ case object NameParser extends Parser[String, String] {
   }
 }
 
+// variables can be simple names or they can represent constants
 lazy val VarParser: Parser[String, Term] =
   NameParser ==> { // replace variable with the term it represents, if defined
     case x => {
@@ -80,13 +81,16 @@ lazy val VarParser: Parser[String, Term] =
     }
   }
 
+// abstractions
 lazy val AbsParser: Parser[String, Term] =
   VarParser ~ " -> " ~ Term ==> { case ((a, b), c) => Abs(a, c): Term } ||
   VarParser ~ " " ~ AbsParser ==> { case ((a, b), c) => Abs(a, c) }
 
+// applications
 lazy val AppParser: Parser[String, Term] =
   (Term ~ " " ~ Term ==> { case ((a, b), c) => App(a, c): Term })
 
+// terms
 lazy val Term: Parser[String, Term] =
   VarParser ||
   (("(" ~ AppParser ~ ")") ==> { case ((a, b), c) => b }) ||
@@ -119,6 +123,7 @@ def substitute(argument: Term, image: Term, term: Term): Term = image match {
   }
 }
 
+// contract a redex
 def betaReduce(term: Term): Term = term match {
   case App(Abs(a, b), c) => substitute(a, b, c)
   case App(a, b) => {
