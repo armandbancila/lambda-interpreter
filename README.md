@@ -1,6 +1,13 @@
 # lambda-interpreter
 Lambda calculus parser and interpreter.
 
+Grammar:
+    Term := Variable | "(".Application.")" | "(".Abstraction.")" | "(".Term.")"
+    Variable := < letters, numbers, symbols, etc. >
+    Application := Term . " " . Term
+    Abstraction := Variable." -> ".Term | Variable." ".Abstraction
+
+
 ## Syntax examples:
 - Y combinator: `(f -> ((x -> (f (x x))) (x -> (f (x x)))))`
 
