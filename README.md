@@ -3,13 +3,13 @@ Lambda calculus parser and interpreter.
 
 Grammar:
     
-	Term := Variable | "(".Application.")" | "(".Abstraction.")" | "(".Term.")"
+	Term := Variable | "(" . Application . ")" | "(" . Abstraction . ")" | "(" . Term . ")"
     
 	Variable := < letters, numbers, symbols, etc. >
     
 	Application := Term . " " . Term
     
-	Abstraction := Variable." -> ".Term | Variable." ".Abstraction
+	Abstraction := Variable . " -> " . Term | Variable . " " . Abstraction
 
 
 ## Syntax examples:
