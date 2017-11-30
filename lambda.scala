@@ -202,6 +202,6 @@ constants += "10" -> eval(lambdaParse("((* 5) 2)"))
 println(evalStr("(Y K*)")) // leftmost derivation avoids infinite loop
 println(evalStr("((S K) K)"))
 println(evalStr("((- ((+ 5) 10)) 4)"))
-println("> 4! = 24")
+println("> 4!")
 println((evalStr(("(fac 4)"))))
 
