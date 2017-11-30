@@ -5,7 +5,7 @@ Grammar:
     
 	Term := Variable | "(" . Application . ")" | "(" . Abstraction . ")" | "(" . Term . ")"
     
-	Variable := < letters, numbers, symbols, etc. >
+	Variable := < letters, numbers, symbols, etc. > | < can also represent a constant, like "Y" >
     
 	Application := Term . " " . Term
     
