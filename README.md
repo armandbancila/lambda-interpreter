@@ -1,2 +1,3 @@
 # lambda-interpreter
-Lambda calculus interpreter
+Lambda calculus parser and interpreter.
+
