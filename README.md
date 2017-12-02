@@ -33,7 +33,7 @@ output: `(z -> z)`
 
 - YK\* = I
 
-input: `println(evalStr("(Y K\*)"))`
+input: `println(evalStr("(Y K*)"))`
 
 output: `(y -> y)`
 
