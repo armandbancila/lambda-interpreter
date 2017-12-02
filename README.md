@@ -24,6 +24,12 @@ Grammar:
 - if: `(then else bool -> ((bool then) else))`
 
 ## Examples:
+- 2^10 with Church numerals
+
+input:  `println(cnToInt(evalStr("((^ 10) 2)")))`
+
+output: `1024`
+
 - SKK = I
 
 input:  `println(evalStr("((S K) K)"))`
