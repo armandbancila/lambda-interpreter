@@ -51,3 +51,21 @@ input: `println(evalStr("(((f -> ((x -> (f (x x))) (x -> (f (x x))))) (f -> (n -
 
 output: `(f -> (x -> (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f x))))))))))))))))))))))))))`
 
+- a scary one: fibonacci (fib_1 = 1, fib_2 = 1, fib_3 = 2, ...)
+
+it is defined as: `"(theta (f n -> (((if 1) (((if 1) ((+ (f ((- n) 2))) (f (-- n)))) (isOne (-- n)))) (isOne n))))"` which means "if n is 1 or 2, return 1, else return fib(n - 2) + fib(n - 1). After a few reductions this becomes Fib(theta Fib) and the `f` argument copies the `theta Fib` function and applies it recursively, until it's at the tail position (n == 1 or n == 2) where it ends and stops the recursion by using the `if` functions. Leftmost derivation ensures that it is up to the leftmost redex to continue the recursion or not, and the theta / Y combinator won't go on looping forever.
+
+(where theta is Turing's combinator, for recursivity, but you can also use the Y combinator)
+
+which, when desugared, is actually:
+
+"(((x -> (y -> (y ((x x) y)))) (x -> (y -> (y ((x x) y))))) (f -> (n -> ((((then -> (else -> (bool -> ((bool then) else)))) (f -> (x -> (f x)))) ((((then -> (else -> (bool -> ((bool then) else)))) (f -> (x -> (f x)))) (((m -> (n -> ((n (n -> (f -> (x -> (f ((n f) x)))))) m))) (f (((m -> (n -> ((n (n -> (f -> (x -> (((n (g -> (h -> (h (g f))))) (u -> x)) (u -> u)))))) m))) n) (f -> (x -> (f (f x))))))) (f ((n -> (f -> (x -> (((n (g -> (h -> (h (g f))))) (u -> x)) (u -> u))))) n)))) ((n -> ((((n -> (f -> (x -> (((n (g -> (h -> (h (g f))))) (u -> x)) (u -> u))))) n) (x -> (x -> (y -> y)))) (x -> (y -> x)))) ((n -> (f -> (x -> (((n (g -> (h -> (h (g f))))) (u -> x)) (u -> u))))) n)))) ((n -> ((((n -> (f -> (x -> (((n (g -> (h -> (h (g f))))) (u -> x)) (u -> u))))) n) (x -> (x -> (y -> y)))) (x -> (y -> x)))) n)))))"
+
+you can define this as being the constant "fib", and do this:
+
+input: `println(evalStr("(fib 10)"))`
+
+output: `(f -> (x -> (f (f ... (f x) ...))))`
+
+...which has 55 f's, which mean's it's c_55, which represents the natural number 55 = fib_10.
+
