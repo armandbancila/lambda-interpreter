@@ -51,7 +51,7 @@ input: `println(evalStr("(((f -> ((x -> (f (x x))) (x -> (f (x x))))) (f -> (n -
 
 output: `(f -> (x -> (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f (f x))))))))))))))))))))))))))`
 
-- a scary one: fibonacci (fib_1 = 1, fib_2 = 1, fib_3 = 2, ...)
+- a scary one: fibonacci (fib_1 = 1, fib_2 = 1, fib_3 = 2, ...) with Church numerals
 
 it is defined as: `"(theta (f n -> (((if 1) (((if 1) ((+ (f ((- n) 2))) (f (-- n)))) (isOne (-- n)))) (isOne n))))"` which means "if n is 1 or 2, return 1, else return fib(n - 2) + fib(n - 1). After a few reductions this becomes Fib(theta Fib) and the `f` argument copies the `theta Fib` function and applies it recursively, until it's at the tail position (n == 1 or n == 2) where it ends and stops the recursion by using the `if` functions. Leftmost derivation ensures that it is up to the leftmost redex to continue the recursion or not, and the theta / Y combinator won't go on looping forever.
 
@@ -67,5 +67,5 @@ input: `println(evalStr("(fib 10)"))`
 
 output: `(f -> (x -> (f (f ... (f x) ...))))`
 
-...which has 55 f's, which mean's it's c_55, which represents the natural number 55 = fib_10.
+...which has 55 f's => c_55, which represents the natural number 55 = fib_10.
 
