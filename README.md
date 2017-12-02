@@ -1,5 +1,5 @@
 # lambda-interpreter
-Lambda calculus parser and interpreter.
+Lambda calculus parser and interpreter with capture avoiding substitution.
 
 Grammar:
     
