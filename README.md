@@ -1,5 +1,5 @@
 # lambda-interpreter
-Lambda calculus parser and interpreter with capture avoiding substitution.
+Lambda calculus parser and interpreter with capture avoiding substitution. Evaluation by repeated beta-reduction of the leftmost, outermost redex with eta-conversion.
 
 Grammar:
     
