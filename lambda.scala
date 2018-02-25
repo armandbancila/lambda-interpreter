@@ -206,7 +206,8 @@ constants += "10" -> eval(lambdaParse("((* 5) 2)"))
 constants += "F" -> lambdaParse("(a -> ((((a K) I) y) x))")
 constants += "and" -> lambdaParse("(x y -> ((x y) x))")
 constants += "or" -> lambdaParse("(x y -> ((x x) y))")
-/*
+constants += "Theta" -> lambdaParse("(x -> ((((x) K) S) K))")
+
 println("> solution F to (F I) = x, (F K) = y")
 println(evalStr("(F I)"))
 println(evalStr("(F K)"))
@@ -222,7 +223,8 @@ println("> fib 10")
 println(cnToInt(eval(lambdaParse("(fib 10)"))))
 println("> 2^10")
 println(termToStr(lambdaParse("(fib 10)")))
-*/
 println(evalStr("((and true) false)"))
 println(evalStr("((and false) false)"))
 println(evalStr("((or true) false)"))
+println(evalStr("(Theta (Theta Theta))"))
+
