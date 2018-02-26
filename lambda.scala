@@ -104,6 +104,14 @@ def freeVars(term: Term): Set[String] = term match {
   case Abs(Var(name), image) => freeVars(image) - name
 }
 
+def boundVars(term: Term): Set[String] = term match {
+  case Var(name) => Set()
+  case App(function, argument) => boundVars(function) ++ boundVars(argument)
+  case Abs(Var(name), image) => Set(name) ++ boundVars(image)
+}
+
+
+
 // capture avoiding substitution
 def substitute(argument: Term, image: Term, term: Term): Term = image match {
   case Var(name) => {
@@ -156,6 +164,12 @@ def termToStr(term: Term): String = term match {
   case Var(a) => a
   case App(a, b) => "(" + termToStr(a) + " " + termToStr(b) + ")"
   case Abs(a, b) => "(" + termToStr(a) + " -> " + termToStr(b) + ")"
+}
+
+def subTerms(term: Term): Set[String] = term match {
+  case Var(a) => Set(a)
+  case App(a, b) => subTerms(b) ++ Set(termToStr(term))
+  case Abs(a, b) => subTerms(a) ++ subTerms(b) ++ Set(termToStr(term))
 }
 
 // parse a string representation of a term into a Term
@@ -228,3 +242,4 @@ println(evalStr("((and false) false)"))
 println(evalStr("((or true) false)"))
 println(evalStr("(Theta (Theta Theta))"))
 
+println(subTerms(lambdaParse("0")))
