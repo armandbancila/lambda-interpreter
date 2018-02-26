@@ -60,7 +60,7 @@ implicit def StringOps(s: String) = new {
 abstract class Term
 case class Var(name: String) extends Term
 case class App(function: Term, argument: Term) extends Term
-case class Abs(argument: Term, image: Term) extends Term
+case class Abs(parameter: Term, body: Term) extends Term
 
 var constants: Map[String, Term] = Map()
 
@@ -98,19 +98,23 @@ lazy val Term: Parser[String, Term] =
   (("(" ~ Term ~ ")") ==> { case ((a, b), c) => b })
 
 // list the unbound variables in a lambda term
-def freeVars(term: Term): Set[String] = term match {
-  case Var(name) => Set(name)
+def freeVars(term: Term): Set[Term] = term match {
+  case Var(name) => Set(term)
   case App(function, argument) => freeVars(function) ++ freeVars(argument)
-  case Abs(Var(name), image) => freeVars(image) - name
+  case Abs(Var(name), image) => freeVars(image) - Var(name)
 }
 
-def boundVars(term: Term): Set[String] = term match {
-  case Var(name) => Set()
+def boundVars(term: Term): Set[Term] = term match {
+  case Var(name) => Set(term)
   case App(function, argument) => boundVars(function) ++ boundVars(argument)
-  case Abs(Var(name), image) => Set(name) ++ boundVars(image)
+  case Abs(Var(name), image) => Set(Var(name)) ++ boundVars(image)
 }
 
-
+def subTerms(term: Term): Set[Term] = term match {
+  case Var(a) => Set(term)
+  case App(a, b) => subTerms(b) ++ Set(term)
+  case Abs(a, b) => subTerms(a) ++ subTerms(b) ++ Set(term)
+}
 
 // capture avoiding substitution
 def substitute(argument: Term, image: Term, term: Term): Term = image match {
@@ -121,9 +125,9 @@ def substitute(argument: Term, image: Term, term: Term): Term = image match {
   case App(a, b) => App(substitute(argument, a, term), substitute(argument, b, term))
   case Abs(Var(a), b) => {
     if (Var(a) == argument) image
-    else if ((Var(a) != argument) && (freeVars(term) contains a)) {
+    else if ((Var(a) != argument) && (freeVars(term) contains Var(a))) {
       var v = a + "'"
-      while ((freeVars(b) contains v) && (freeVars(term) contains v)) v = v + "'"
+      while ((freeVars(b) contains Var(v)) && (freeVars(term) contains Var(v))) v = v + "'"
       Abs(Var(v), substitute(argument, substitute(Var(a), b, Var(v)), term))
     }
     else Abs(Var(a), substitute(argument, b, term))
@@ -144,7 +148,7 @@ def betaReduce(term: Term): Term = term match {
 
 // simplifies terms of the form (x -> (f x)) to f, if x isn't in f
 def etaConvert(term: Term): Term = term match {
-  case Abs(Var(x), App(f, Var(y))) if (!(freeVars(f) contains x) && x == y) => f
+  case Abs(a, App(f, b)) if (!(freeVars(f) contains a) && a == b) => f
   case _ => term
 }
 
@@ -166,11 +170,7 @@ def termToStr(term: Term): String = term match {
   case Abs(a, b) => "(" + termToStr(a) + " -> " + termToStr(b) + ")"
 }
 
-def subTerms(term: Term): Set[String] = term match {
-  case Var(a) => Set(a)
-  case App(a, b) => subTerms(b) ++ Set(termToStr(term))
-  case Abs(a, b) => subTerms(a) ++ subTerms(b) ++ Set(termToStr(term))
-}
+
 
 // parse a string representation of a term into a Term
 def lambdaParse(input: String): Term = Term.parse_all(input).head
