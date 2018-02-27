@@ -117,20 +117,20 @@ def subTerms(term: Term): Set[Term] = term match {
 }
 
 // capture avoiding substitution
-def substitute(ap: Term, fp: Term, term: Term): Term = fp match {
+def substitute(fp: Term, body: Term, arg: Term): Term = body match {
   case Var(name) => {
-    if (ap == fp) term
-    else fp
+    if (fp == body) arg
+    else body
   }
-  case App(a, b) => App(substitute(ap, a, term), substitute(ap, b, term))
+  case App(a, b) => App(substitute(fp, a, arg), substitute(fp, b, arg))
   case Abs(Var(a), b) => {
-    if (Var(a) == ap) fp
-    else if ((Var(a) != ap) && (freeVars(term) contains Var(a))) {
+    if (Var(a) == fp) body
+    else if ((Var(a) != fp) && (freeVars(arg) contains Var(a))) {
       var v = a + "'"
-      while ((freeVars(b) contains Var(v)) && (freeVars(term) contains Var(v))) v = v + "'"
-      Abs(Var(v), substitute(ap, substitute(Var(a), b, Var(v)), term))
+      while ((freeVars(b) contains Var(v)) && (freeVars(arg) contains Var(v))) v = v + "'"
+      Abs(Var(v), substitute(fp, substitute(Var(a), b, Var(v)), arg))
     }
-    else Abs(Var(a), substitute(ap, b, term))
+    else Abs(Var(a), substitute(fp, b, arg))
   }
 }
 
