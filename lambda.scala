@@ -99,15 +99,15 @@ lazy val Term: Parser[String, Term] =
 
 // list the unbound variables in a lambda term
 def freeVars(term: Term): Set[Term] = term match {
-  case Var(name) => Set(term)
-  case App(function, argument) => freeVars(function) ++ freeVars(argument)
-  case Abs(Var(name), image) => freeVars(image) - Var(name)
+  case Var(_) => Set(term)
+  case App(a, b) => freeVars(a) ++ freeVars(b)
+  case Abs(a, b) => freeVars(b) - a
 }
 
 def boundVars(term: Term): Set[Term] = term match {
-  case Var(name) => Set(term)
-  case App(function, argument) => boundVars(function) ++ boundVars(argument)
-  case Abs(Var(name), image) => Set(Var(name)) ++ boundVars(image)
+  case Var(_) => Set(term)
+  case App(a, b) => boundVars(a) ++ boundVars(b)
+  case Abs(a, b) => Set(a) ++ boundVars(b)
 }
 
 def subTerms(term: Term): Set[Term] = term match {
@@ -117,20 +117,20 @@ def subTerms(term: Term): Set[Term] = term match {
 }
 
 // capture avoiding substitution
-def substitute(argument: Term, image: Term, term: Term): Term = image match {
+def substitute(ap: Term, fp: Term, term: Term): Term = fp match {
   case Var(name) => {
-    if (argument == image) term
-    else image
+    if (ap == fp) term
+    else fp
   }
-  case App(a, b) => App(substitute(argument, a, term), substitute(argument, b, term))
+  case App(a, b) => App(substitute(ap, a, term), substitute(ap, b, term))
   case Abs(Var(a), b) => {
-    if (Var(a) == argument) image
-    else if ((Var(a) != argument) && (freeVars(term) contains Var(a))) {
+    if (Var(a) == ap) fp
+    else if ((Var(a) != ap) && (freeVars(term) contains Var(a))) {
       var v = a + "'"
       while ((freeVars(b) contains Var(v)) && (freeVars(term) contains Var(v))) v = v + "'"
-      Abs(Var(v), substitute(argument, substitute(Var(a), b, Var(v)), term))
+      Abs(Var(v), substitute(ap, substitute(Var(a), b, Var(v)), term))
     }
-    else Abs(Var(a), substitute(argument, b, term))
+    else Abs(Var(a), substitute(ap, b, term))
   }
 }
 
