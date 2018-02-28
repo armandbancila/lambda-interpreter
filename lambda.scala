@@ -97,7 +97,6 @@ lazy val Term: Parser[String, Term] =
   (("(" ~ AbsParser ~ ")") ==> { case ((a, b), c) => b }) ||
   (("(" ~ Term ~ ")") ==> { case ((a, b), c) => b })
 
-// list the unbound variables in a lambda term
 def freeVars(term: Term): Set[Term] = term match {
   case Var(_) => Set(term)
   case App(a, b) => freeVars(a) ++ freeVars(b)
@@ -170,8 +169,6 @@ def termToStr(term: Term): String = term match {
   case Abs(a, b) => "(" + termToStr(a) + " -> " + termToStr(b) + ")"
 }
 
-
-
 // parse a string representation of a term into a Term
 def lambdaParse(input: String): Term = Term.parse_all(input).head
 
@@ -241,5 +238,6 @@ println(evalStr("((and true) false)"))
 println(evalStr("((and false) false)"))
 println(evalStr("((or true) false)"))
 println(evalStr("(Theta (Theta Theta))"))
+println(evalStr("(x -> (y x))"))
 
 println(subTerms(lambdaParse("0")))
