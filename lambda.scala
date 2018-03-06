@@ -171,7 +171,7 @@ def termToStr(term: Term): String = term match {
 
 def termToStrDB(term: Term, env: Array[String]): String = term match {
   case Var(a) => (env.indexOf(a) + 1).toString
-  case Abs(Var(a), b) => "\\" + "(" + termToStrDB(b, env :+ a) + ")"
+  case Abs(Var(a), b) => "\\" + termToStrDB(b, env :+ a)
   case App(a, b) => "(" + termToStrDB(a, env) + " " + termToStrDB(b, env) + ")"
 }
 
