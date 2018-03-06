@@ -165,8 +165,14 @@ def eval(input: Term): Term = {
 
 def termToStr(term: Term): String = term match {
   case Var(a) => a
-  case App(a, b) => "(" + termToStr(a) + " " + termToStr(b) + ")"
   case Abs(a, b) => "(" + termToStr(a) + " -> " + termToStr(b) + ")"
+  case App(a, b) => "(" + termToStr(a) + " " + termToStr(b) + ")"
+}
+
+def termToStrDB(term: Term, env: Array[String]): String = term match {
+  case Var(a) => (env.indexOf(a) + 1).toString
+  case Abs(Var(a), b) => "\\" + "(" + termToStrDB(b, env :+ a) + ")"
+  case App(a, b) => "(" + termToStrDB(a, env) + " " + termToStrDB(b, env) + ")"
 }
 
 // parse a string representation of a term into a Term
@@ -240,4 +246,4 @@ println(evalStr("((or true) false)"))
 println(evalStr("(Theta (Theta Theta))"))
 println(evalStr("(x -> (y x))"))
 
-println(subTerms(lambdaParse("0")))
+println(termToStrDB(lambdaParse("(x -> ((y z -> (y)) x))"), Array()))
