@@ -94,8 +94,7 @@ lazy val AppParser: Parser[String, Term] =
 lazy val Term: Parser[String, Term] =
   VarParser ||
   (("(" ~ AppParser ~ ")") ==> { case ((a, b), c) => b }) ||
-  (("(" ~ AbsParser ~ ")") ==> { case ((a, b), c) => b }) ||
-  (("(" ~ Term ~ ")") ==> { case ((a, b), c) => b })
+  (("(" ~ AbsParser ~ ")") ==> { case ((a, b), c) => b })
 
 def freeVars(term: Term): Set[Term] = term match {
   case Var(_) => Set(term)
@@ -171,7 +170,7 @@ def termToStr(term: Term): String = term match {
 
 def termToStrDB(term: Term, env: Array[String]): String = term match {
   case Var(a) => (env.indexOf(a) + 1).toString
-  case Abs(Var(a), b) => "\\" + termToStrDB(b, env :+ a)
+  case Abs(Var(a), b) => "\\\\" + "(" + termToStrDB(b, a +: env) + ")"
   case App(a, b) => "(" + termToStrDB(a, env) + " " + termToStrDB(b, env) + ")"
 }
 
@@ -217,13 +216,13 @@ constants += "^" -> lambdaParse("(m n -> ((m (* n)) 1))")
 constants += "isZero" -> lambdaParse("(n -> ((n (x -> false)) true))")
 constants += "isOne" -> lambdaParse("(n -> (((-- n) (x -> false)) true))")
 constants += "fac" -> lambdaParse("(theta (f n -> (((isOne n) 1) ((* n) (f (-- n))))))")
-constants += "fib" -> lambdaParse("(theta (f n -> (((((isOne n) 1) (((isOne (-- n)) 1) ((+ (f ((- n) 2))) (f (-- n)))))))))")
-constants += "div" -> lambdaParse("(n -> ((theta (c n m f x -> ((d -> (((isZero d) ((0 f) x)) (f (((((c d) m) f) x))))) ((- n) m)))) (++ n)))")
+constants += "fib" -> lambdaParse("(theta (f n -> (((isOne n) 1) (((isOne (-- n)) 1) ((+ (f ((- n) 2))) (f (-- n)))))))")
+constants += "div" -> lambdaParse("(n -> ((theta (c n m f x -> ((d -> (((isZero d) ((0 f) x)) (f ((((c d) m) f) x)))) ((- n) m)))) (++ n)))")
 constants += "10" -> eval(lambdaParse("((* 5) 2)"))
 constants += "F" -> lambdaParse("(a -> ((((a K) I) y) x))")
 constants += "and" -> lambdaParse("(x y -> ((x y) x))")
 constants += "or" -> lambdaParse("(x y -> ((x x) y))")
-constants += "Theta" -> lambdaParse("(x -> ((((x) K) S) K))")
+constants += "Theta" -> lambdaParse("(x -> (((x K) S) K))")
 
 println("> solution F to (F I) = x, (F K) = y")
 println(evalStr("(F I)"))
@@ -246,4 +245,4 @@ println(evalStr("((or true) false)"))
 println(evalStr("(Theta (Theta Theta))"))
 println(evalStr("(x -> (y x))"))
 
-println(termToStrDB(lambdaParse("(x -> ((y z -> (y)) x))"), Array()))
+println(termToStrDB(lambdaParse("(s k)"), Array("s" -> "\\(\\(\\(((3 1) (2 1)))))", "k" -> "\\(\\(2 1))")))
