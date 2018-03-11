@@ -168,10 +168,26 @@ def termToStr(term: Term): String = term match {
   case App(a, b) => "(" + termToStr(a) + " " + termToStr(b) + ")"
 }
 
-def termToStrDB(term: Term, env: Array[String]): String = term match {
-  case Var(a) => (env.indexOf(a) + 1).toString
-  case Abs(Var(a), b) => "\\\\" + "(" + termToStrDB(b, a +: env) + ")"
-  case App(a, b) => "(" + termToStrDB(a, env) + " " + termToStrDB(b, env) + ")"
+case class VarDB(index: Int) extends Term
+case class AppDB(function: Term, argument: Term) extends Term
+case class AbsDB(body: Term) extends Term
+
+def termToDB(term: Term, env: Array[String]): Term = term match {
+  case Var(a) => VarDB(env.indexOf(a) + 1)
+  case Abs(Var(a), b) => AbsDB(termToDB(b, a +: env))
+  case App(a, b) => AppDB(termToDB(a, env), termToDB(b, env))
+}
+
+def termToStrDB(term: Term): String = term match {
+  case VarDB(a) => a.toString
+  case AbsDB(a) => "\\\\" + "(" + termToStrDB(a) + ")"
+  case AppDB(a, b) => "(" + termToStrDB(a) + " " + termToStrDB(b) + ")"
+}
+
+def kcode(term: Term): String = term match {
+  case VarDB(a) => "Access(" + a.toString + ");"
+  case AbsDB(a) => "Grab;" + kcode(a)
+  case AppDB(a, b) => "Push(" + kcode(b) + ");" + kcode(a)
 }
 
 // parse a string representation of a term into a Term
@@ -245,4 +261,6 @@ println(evalStr("((or true) false)"))
 println(evalStr("(Theta (Theta Theta))"))
 println(evalStr("(x -> (y x))"))
 
-println(termToStrDB(lambdaParse("(s k)"), Array("s" -> "\\(\\(\\(((3 1) (2 1)))))", "k" -> "\\(\\(2 1))")))
+println(termToStrDB(termToDB(lambdaParse("((K S) K)"), Array())))
+val example = termToDB(lambdaParse("((x -> (x x)) (x -> x))"), Array())
+println(kcode(example))
