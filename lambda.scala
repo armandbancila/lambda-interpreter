@@ -16,6 +16,31 @@ class SeqParser[I <% Seq[_], T, S](p: => Parser[I, T], q: => Parser[I, S]) exten
          (head2, tail2) <- q.parse(tail1)) yield ((head1, head2), tail2)
 }
 
+class StarParser(p: => Parser[String, Term]) extends Parser[String, Term] {
+  def parse(string: String) = {
+    if (string == "") Set()
+    else {
+      val a = for (t <- p.parse(string)) yield t
+      lazy val p1 = " " ~ p ==> { case (a, b) => b }
+      
+      var a1 = a
+      var ok = true
+      
+      var b = Set.empty[(Term, String)]
+      if (!a.isEmpty) {
+        while (ok) {
+          b = for((h, t) <- a1; (h1, t1) <- p1.parse(t)) yield (App(h, h1), t1)
+          if (b.isEmpty) ok = false
+          else a1 = b
+        }
+      }
+
+      if (!a1.isEmpty) a1
+      else a
+    }
+  }
+}
+
 // apply both parsers and do a set union on their separate outputs
 class AltParser[I <% Seq[_], T](p: => Parser[I, T], q: => Parser[I, T]) extends Parser[I, T] {
   def parse(string: I) = p.parse(string) ++ q.parse(string)
@@ -27,7 +52,7 @@ class FunParser[I <% Seq[_], T, S](p: => Parser[I, T], f: T => S) extends Parser
     for ((head, tail) <- p.parse(string)) yield (f(head), tail)
 }
 
-// implicit conversion stuff
+// implicit conversion
 case class StringParser(s: String) extends Parser[String, String] {
   def parse(sb: String) = {
     val (prefix, suffix) = sb.splitAt(s.length)
@@ -43,6 +68,10 @@ implicit def parserOps[I<% Seq[_], T](p: Parser[I, T]) = new {
   def || (q: => Parser[I, T]) = new AltParser[I, T](p, q)
   def ==>[S] (f: => T => S) = new FunParser[I, T, S](p, f)
   def ~[S] (q: => Parser[I, S]) = new SeqParser[I, T, S](p, q)
+}
+
+implicit def parserStringOps(p: Parser[String, Term]) = new {
+  def + = new StarParser(p)
 }
 
 // do the same for strings and parsers
@@ -88,11 +117,12 @@ lazy val AbsParser: Parser[String, Term] =
 
 // applications
 lazy val AppParser: Parser[String, Term] =
-  (Term ~ " " ~ Term ==> { case ((a, b), c) => App(a, c): Term })
+  (Term+) ||
+  (Term ~ " " ~ Term ==> { case ((a, b), c) => App(a, c): Term})
 
 // terms
 lazy val Term: Parser[String, Term] =
-  VarParser ||
+  VarParser || 
   (("(" ~ AppParser ~ ")") ==> { case ((a, b), c) => b }) ||
   (("(" ~ AbsParser ~ ")") ==> { case ((a, b), c) => b })
 
@@ -176,7 +206,7 @@ case object PlusDB extends Term
 
 def termToDB(term: Term, env: Array[String]): Term = term match {
   case Var(a) => {
-    if (a == "c+") PlusDB()
+    if (a == "c+") PlusDB
     else if (a == "7") CNDB(3)
     else VarDB(env.indexOf(a) + 1)
   }
@@ -268,6 +298,8 @@ println(evalStr("((and false) false)"))
 println(evalStr("((or true) false)"))
 println(evalStr("(Theta (Theta Theta))"))
 println(evalStr("(x -> (y x))"))
+println("TEST!!!")
+println(evalStr("(K K K)"))
 
 println(termToStrDB(termToDB(lambdaParse("((K S) K)"), Array())))
 var example = termToDB(lambdaParse("((x -> (x x)) (x -> x))"), Array())
