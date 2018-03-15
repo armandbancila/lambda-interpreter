@@ -16,31 +16,6 @@ class SeqParser[I <% Seq[_], T, S](p: => Parser[I, T], q: => Parser[I, S]) exten
          (head2, tail2) <- q.parse(tail1)) yield ((head1, head2), tail2)
 }
 
-class StarParser(p: => Parser[String, Term]) extends Parser[String, Term] {
-  def parse(string: String) = {
-    if (string == "") Set()
-    else {
-      val a = for (t <- p.parse(string)) yield t
-      lazy val p1 = " " ~ p ==> { case (a, b) => b }
-      
-      var a1 = a
-      var ok = true
-      
-      var b = Set.empty[(Term, String)]
-      if (!a.isEmpty) {
-        while (ok) {
-          b = for((h, t) <- a1; (h1, t1) <- p1.parse(t)) yield (App(h, h1), t1)
-          if (b.isEmpty) ok = false
-          else a1 = b
-        }
-      }
-
-      if (!a1.isEmpty) a1
-      else a
-    }
-  }
-}
-
 // apply both parsers and do a set union on their separate outputs
 class AltParser[I <% Seq[_], T](p: => Parser[I, T], q: => Parser[I, T]) extends Parser[I, T] {
   def parse(string: I) = p.parse(string) ++ q.parse(string)
@@ -85,6 +60,31 @@ implicit def StringOps(s: String) = new {
     new SeqParser[String, String, String](s, r)
 }
 
+class StarParser(p: => Parser[String, Term]) extends Parser[String, Term] {
+  def parse(string: String) = {
+    if (string == "") Set()
+    else {
+      val a = for (t <- p.parse(string)) yield t
+      lazy val p1 = " " ~ p ==> { case (a, b) => b }
+      
+      var a1 = a
+      var ok = true
+      
+      var b = Set.empty[(Term, String)]
+      if (!a.isEmpty) {
+        while (ok) {
+          b = for((h, t) <- a1; (h1, t1) <- p1.parse(t)) yield (App(h, h1), t1)
+          if (b.isEmpty) ok = false
+          else a1 = b
+        }
+      }
+
+      if (!a1.isEmpty) a1
+      else a
+    }
+  }
+}
+
 // a term can be a variable, an application of 2 terms, or an abstraction = function
 abstract class Term
 case class Var(name: String) extends Term
@@ -124,7 +124,7 @@ lazy val AppParser: Parser[String, Term] =
 lazy val Term: Parser[String, Term] =
   VarParser || 
   (("(" ~ AppParser ~ ")") ==> { case ((a, b), c) => b }) ||
-  (("(" ~ AbsParser ~ ")") ==> { case ((a, b), c) => b })
+  (("(\\" ~ AbsParser ~ ")") ==> { case ((a, b), c) => b })
 
 def freeVars(term: Term): Set[Term] = term match {
   case Var(_) => Set(term)
@@ -204,30 +204,6 @@ case class AbsDB(body: Term) extends Term
 case class CNDB(number: Int) extends Term
 case object PlusDB extends Term
 
-def termToDB(term: Term, env: Array[String]): Term = term match {
-  case Var(a) => {
-    if (a == "c+") PlusDB
-    else if (a == "7") CNDB(3)
-    else VarDB(env.indexOf(a) + 1)
-  }
-  case Abs(Var(a), b) => AbsDB(termToDB(b, a +: env))
-  case App(a, b) => AppDB(termToDB(a, env), termToDB(b, env))
-}
-
-def termToStrDB(term: Term): String = term match {
-  case VarDB(a) => a.toString
-  case AbsDB(a) => "\\\\" + "(" + termToStrDB(a) + ")"
-  case AppDB(a, b) => "(" + termToStrDB(a) + " " + termToStrDB(b) + ")"
-}
-
-def kcode(term: Term): String = term match {
-  case VarDB(a) => "Access(" + a.toString + ");"
-  case AbsDB(a) => "Grab;" + kcode(a)
-  case AppDB(a, b) => "Push(" + kcode(b) + ");" + kcode(a)
-  case PlusDB => "Plus;"
-  case CNDB(n) => "CN(" + n.toString + ");"
-}
-
 // parse a string representation of a term into a Term
 def lambdaParse(input: String): Term = Term.parse_all(input).head
 
@@ -244,39 +220,39 @@ def cnToInt(term: Term): Int = term match {
 // define constants for the language
 // constants such as the Y combinator
 constants = constants ++ Map(
-  ("S" -> lambdaParse("(x y z -> ((x z) (y z)))")),
-  ("K" -> lambdaParse("(x y -> x)")),
-  ("I" -> lambdaParse("(x -> x)")),
-  ("K*" -> lambdaParse("(x y -> y)")),
-  ("Y" -> lambdaParse("(f -> ((x -> (f (x x))) (x -> (f (x x)))))")), // Y combinator
-  ("theta" -> lambdaParse("((x y -> (y ((x x) y))) (x y -> (y ((x x) y))))")) // Turing's fixed point combinator
+  ("S" -> lambdaParse("(\\x y z -> ((x z) (y z)))")),
+  ("K" -> lambdaParse("(\\x y -> x)")),
+  ("I" -> lambdaParse("(\\x -> x)")),
+  ("K*" -> lambdaParse("(\\x y -> y)")),
+  ("Y" -> lambdaParse("(\\f -> ((\\x -> (f (x x))) (\\x -> (f (x x)))))")), // Y combinator
+  ("theta" -> lambdaParse("((\\x y -> (y ((x x) y))) (\\x y -> (y ((x x) y))))")) // Turing's fixed point combinator
 )
 
 constants += "true" -> lambdaParse("K")
 constants += "false" -> lambdaParse("K*")
 constants += "if" -> lambdaParse("(then else bool -> ((bool then) else))")
-constants += "0" -> lambdaParse("(f x -> x)")
-constants += "1" -> lambdaParse("(f x -> (f x))")
-constants += "2" -> lambdaParse("(f x -> (f (f x)))")
-constants += "3" -> lambdaParse("(f x -> (f (f (f x))))")
-constants += "4" -> lambdaParse("(f x -> (f (f (f (f x)))))")
-constants += "5" -> lambdaParse("(f x -> (f (f (f (f (f x))))))")
-constants += "++" ->  lambdaParse("(n f x -> (f ((n f) x)))")
-constants += "--" ->  lambdaParse("(n f x -> (((n (g h -> (h (g f)))) (u -> x)) (u -> u)))")
-constants += "+" ->  lambdaParse("(m n -> ((m ++) n))")
-constants += "-" ->  lambdaParse("(m n -> ((n --) m))")
-constants += "*" -> lambdaParse("(m n -> ((m (+ n)) 0))")
-constants += "^" -> lambdaParse("(m n -> ((m (* n)) 1))")
-constants += "isZero" -> lambdaParse("(n -> ((n (x -> false)) true))")
-constants += "isOne" -> lambdaParse("(n -> (((-- n) (x -> false)) true))")
-constants += "fac" -> lambdaParse("(theta (f n -> (((isOne n) 1) ((* n) (f (-- n))))))")
-constants += "fib" -> lambdaParse("(theta (f n -> (((isOne n) 1) (((isOne (-- n)) 1) ((+ (f ((- n) 2))) (f (-- n)))))))")
-constants += "div" -> lambdaParse("(n -> ((theta (c n m f x -> ((d -> (((isZero d) ((0 f) x)) (f ((((c d) m) f) x)))) ((- n) m)))) (++ n)))")
+constants += "0" -> lambdaParse("(\\f x -> x)")
+constants += "1" -> lambdaParse("(\\f x -> (f x))")
+constants += "2" -> lambdaParse("(\\f x -> (f (f x)))")
+constants += "3" -> lambdaParse("(\\f x -> (f (f (f x))))")
+constants += "4" -> lambdaParse("(\\f x -> (f (f (f (f x)))))")
+constants += "5" -> lambdaParse("(\\f x -> (f (f (f (f (f x))))))")
+constants += "++" ->  lambdaParse("(\\n f x -> (f ((n f) x)))")
+constants += "--" ->  lambdaParse("(\\n f x -> (((n (\\g h -> (h (g f)))) (\\u -> x)) (\\u -> u)))")
+constants += "+" ->  lambdaParse("(\\m n -> ((m ++) n))")
+constants += "-" ->  lambdaParse("(\\m n -> ((n --) m))")
+constants += "*" -> lambdaParse("(\\m n -> ((m (+ n)) 0))")
+constants += "^" -> lambdaParse("(\\m n -> ((m (* n)) 1))")
+constants += "isZero" -> lambdaParse("(\\n -> ((n (\\x -> false)) true))")
+constants += "isOne" -> lambdaParse("(\\n -> (((-- n) (\\x -> false)) true))")
+constants += "fac" -> lambdaParse("(theta (\\f n -> (((isOne n) 1) ((* n) (f (-- n))))))")
+constants += "fib" -> lambdaParse("(theta (\\f n -> (((isOne n) 1) (((isOne (-- n)) 1) ((+ (f ((- n) 2))) (f (-- n)))))))")
+constants += "div" -> lambdaParse("(\\n -> ((theta (\\c n m f x -> ((\\d -> (((isZero d) ((0 f) x)) (f ((((c d) m) f) x)))) ((- n) m)))) (++ n)))")
 constants += "10" -> eval(lambdaParse("((* 5) 2)"))
-constants += "F" -> lambdaParse("(a -> ((((a K) I) y) x))")
-constants += "and" -> lambdaParse("(x y -> ((x y) x))")
-constants += "or" -> lambdaParse("(x y -> ((x x) y))")
-constants += "Theta" -> lambdaParse("(x -> (((x K) S) K))")
+constants += "F" -> lambdaParse("(\\a -> ((((a K) I) y) x))")
+constants += "and" -> lambdaParse("(\\x y -> ((x y) x))")
+constants += "or" -> lambdaParse("(\\x y -> ((x x) y))")
+constants += "Theta" -> lambdaParse("(\\x -> (((x K) S) K))")
 
 println("> solution F to (F I) = x, (F K) = y")
 println(evalStr("(F I)"))
@@ -294,14 +270,6 @@ println(cnToInt(eval(lambdaParse("(fib 10)"))))
 println("> 2^10")
 println(termToStr(lambdaParse("(fib 10)")))
 println(evalStr("((and true) false)"))
-println(evalStr("((and false) false)"))
 println(evalStr("((or true) false)"))
-println(evalStr("(Theta (Theta Theta))"))
-println(evalStr("(x -> (y x))"))
-println("TEST!!!")
-println(evalStr("(K K K)"))
+println(evalStr("(K K S)"))
 
-println(termToStrDB(termToDB(lambdaParse("((K S) K)"), Array())))
-var example = termToDB(lambdaParse("((x -> (x x)) (x -> x))"), Array())
-example = termToDB(lambdaParse("((c+ 7) 7)"), Array())
-println(kcode(example))
