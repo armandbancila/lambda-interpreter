@@ -215,7 +215,7 @@ constants = constants ++ Map(
 
 constants += "true" -> lambdaParse("K")
 constants += "false" -> lambdaParse("K*")
-constants += "if" -> lambdaParse("(\\then else bool.((bool then) else))")
+constants += "if" -> lambdaParse("(\\then else bool.(bool then else))")
 constants += "0" -> lambdaParse("(\\f x.x)")
 constants += "1" -> lambdaParse("(\\f x.(f x))")
 constants += "2" -> lambdaParse("(\\f x.(f (f x)))")
