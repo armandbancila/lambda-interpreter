@@ -60,24 +60,21 @@ implicit def StringOps(s: String) = new {
 // used for left associative operator parsing
 class LAParser(op: String)(p: => Parser[String, Term]) extends Parser[String, Term] {
   def parse(string: String) = {
-    if (string == "") Set()
-    else {
-      lazy val nextMunch = op ~ p ==> { case (a, b) => b }
-      lazy val singleApp = p ~ op ~ p ==> { case ((a, b), c) => App(a, c): Term }
-      val initialParsing = for (t <- singleApp.parse(string)) yield t
+    lazy val nextMunch = op ~ p ==> { case (a, b) => b }
+    lazy val singleApp = p ~ op ~ p ==> { case ((a, b), c) => App(a, c): Term }
+    val initialParsing = for (t <- singleApp.parse(string)) yield t
 
-      var accumulator = initialParsing
-      var nextApp = Set.empty[(Term, String)]
-      var canStillParse = true
-      if (!accumulator.isEmpty) {
-        while (canStillParse) {
-          nextApp = for((h1, t1) <- accumulator; (h2, t2) <- nextMunch.parse(t1)) yield (App(h1, h2), t2)
-          if (nextApp.isEmpty) canStillParse = false
-          else accumulator = nextApp
-        }
+    var accumulator = initialParsing
+    var nextApp = Set.empty[(Term, String)]
+    var canStillParse = true
+    if (!accumulator.isEmpty) {
+      while (canStillParse) {
+        nextApp = for((h1, t1) <- accumulator; (h2, t2) <- nextMunch.parse(t1)) yield (App(h1, h2), t2)
+        if (nextApp.isEmpty) canStillParse = false
+        else accumulator = nextApp
       }
-      accumulator
     }
+    accumulator
   }
 }
 
