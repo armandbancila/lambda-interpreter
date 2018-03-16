@@ -45,10 +45,6 @@ implicit def parserOps[I<% Seq[_], T](p: Parser[I, T]) = new {
   def ~[S] (q: => Parser[I, S]) = new SeqParser[I, T, S](p, q)
 }
 
-implicit def parserStringOps(p: Parser[String, Term]) = new {
-  def + = new StarParser(p)
-}
-
 // do the same for strings and parsers
 implicit def StringOps(s: String) = new {
   def || (q : => Parser[String, String]) = new AltParser[String, String](s, q)
@@ -58,14 +54,15 @@ implicit def StringOps(s: String) = new {
     new SeqParser[String, String, S](s, q)
   def ~ (r: String) = 
     new SeqParser[String, String, String](s, r)
+  def * (p: => Parser[String, Term]) = new LAParser(s)(p)
 }
 
-class StarParser(p: => Parser[String, Term]) extends Parser[String, Term] {
+class LAParser(op: String)(p: => Parser[String, Term]) extends Parser[String, Term] {
   def parse(string: String) = {
     if (string == "") Set()
     else {
       val a = for (t <- p.parse(string)) yield t
-      lazy val p1 = " " ~ p ==> { case (a, b) => b }
+      lazy val p1 = op ~ p ==> { case (a, b) => b }
       
       var a1 = a
       var ok = true
@@ -77,10 +74,9 @@ class StarParser(p: => Parser[String, Term]) extends Parser[String, Term] {
           if (b.isEmpty) ok = false
           else a1 = b
         }
+        a1
       }
-
-      if (!a1.isEmpty) a1
-      else a
+      else Set()
     }
   }
 }
@@ -117,7 +113,7 @@ lazy val AbsParser: Parser[String, Term] =
 
 // applications
 lazy val AppParser: Parser[String, Term] =
-  (Term+) ||
+  (" " * Term) ||
   (Term ~ " " ~ Term ==> { case ((a, b), c) => App(a, c): Term})
 
 // terms
@@ -271,5 +267,5 @@ println("> 2^10")
 println(termToStr(lambdaParse("(fib 10)")))
 println(evalStr("((and true) false)"))
 println(evalStr("((or true) false)"))
-println(evalStr("(K K S)"))
+println(evalStr("(K K K K K K)"))
 
