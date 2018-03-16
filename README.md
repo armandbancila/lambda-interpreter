@@ -3,7 +3,7 @@ Lambda calculus parser and interpreter with capture avoiding substitution. Evalu
 
 Grammar:
     
-	Term := Variable | "(" . Application . ")" | "(" . Abstraction . ")" | "(" . Term . ")"
+	Term := Variable | "(" . Application . ")" | "(\" . Abstraction . ")" | "(" . Term . ")"
     
 	Variable := < letters, numbers, symbols, etc. and can represent a constant, like "Y" >
     
