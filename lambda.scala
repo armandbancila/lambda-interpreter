@@ -61,22 +61,21 @@ class LAParser(op: String)(p: => Parser[String, Term]) extends Parser[String, Te
   def parse(string: String) = {
     if (string == "") Set()
     else {
-      val a = for (t <- p.parse(string)) yield t
       lazy val p1 = op ~ p ==> { case (a, b) => b }
+      lazy val p2 = p ~ op ~ p ==> { case ((a, b), c) => App(a, c): Term }
+      val a = for (t <- p2.parse(string)) yield t
       
       var a1 = a
-      var ok = true
-      
       var b = Set.empty[(Term, String)]
+      var canStillParse = true
       if (!a.isEmpty) {
-        while (ok) {
+        while (canStillParse) {
           b = for((h, t) <- a1; (h1, t1) <- p1.parse(t)) yield (App(h, h1), t1)
-          if (b.isEmpty) ok = false
+          if (b.isEmpty) canStillParse = false
           else a1 = b
         }
-        a1
       }
-      else Set()
+      a1
     }
   }
 }
@@ -113,8 +112,7 @@ lazy val AbsParser: Parser[String, Term] =
 
 // applications
 lazy val AppParser: Parser[String, Term] =
-  (" " * Term) ||
-  (Term ~ " " ~ Term ==> { case ((a, b), c) => App(a, c): Term})
+  (" " * Term)
 
 // terms
 lazy val Term: Parser[String, Term] =
