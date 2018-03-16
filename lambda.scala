@@ -183,17 +183,17 @@ def eval(input: Term): Term = {
   }
 }
 
-def termToStr(term: Term): String = term match {
-  case Var(a) => a
-  case Abs(a, b) => "(" + termToStr(a) + " -> " + termToStr(b) + ")"
-  case App(a, b) => "(" + termToStr(a) + " " + termToStr(b) + ")"
-}
-
 // parse a string representation of a term into a Term
 def lambdaParse(input: String): Term = Term.parse_all(input).head
 
 // evaluate a term in a string by parsing & beta-reducing it repeatedly
 def evalStr(input: String): String = termToStr(eval(lambdaParse(input)))
+
+def termToStr(term: Term): String = term match {
+  case Var(a) => a
+  case Abs(a, b) => "(" + termToStr(a) + " -> " + termToStr(b) + ")"
+  case App(a, b) => "(" + termToStr(a) + " " + termToStr(b) + ")"
+}
 
 // convert Church numerals to Int
 def cnToInt(term: Term): Int = term match {
