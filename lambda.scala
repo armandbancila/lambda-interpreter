@@ -109,8 +109,7 @@ lazy val AbsParser: Parser[String, Term] =
   VarParser ~ " " ~ AbsParser ==> { case ((a, b), c) => Abs(a, c) }
 
 // applications
-lazy val AppParser: Parser[String, Term] =
-  (" " * Term)
+lazy val AppParser: Parser[String, Term] = " " * Term
 
 // terms
 lazy val Term: Parser[String, Term] =
@@ -190,12 +189,6 @@ def termToStr(term: Term): String = term match {
   case App(a, b) => "(" + termToStr(a) + " " + termToStr(b) + ")"
 }
 
-case class VarDB(index: Int) extends Term
-case class AppDB(function: Term, argument: Term) extends Term
-case class AbsDB(body: Term) extends Term
-case class CNDB(number: Int) extends Term
-case object PlusDB extends Term
-
 // parse a string representation of a term into a Term
 def lambdaParse(input: String): Term = Term.parse_all(input).head
 
@@ -210,14 +203,13 @@ def cnToInt(term: Term): Int = term match {
 }
 
 // define constants for the language
-// constants such as the Y combinator
 constants = constants ++ Map(
-  ("S" -> lambdaParse("(\\x y z -> ((x z) (y z)))")),
+  ("S" -> lambdaParse("(\\x y z -> (x z (y z)))")),
   ("K" -> lambdaParse("(\\x y -> x)")),
   ("I" -> lambdaParse("(\\x -> x)")),
   ("K*" -> lambdaParse("(\\x y -> y)")),
   ("Y" -> lambdaParse("(\\f -> ((\\x -> (f (x x))) (\\x -> (f (x x)))))")), // Y combinator
-  ("theta" -> lambdaParse("((\\x y -> (y ((x x) y))) (\\x y -> (y ((x x) y))))")) // Turing's fixed point combinator
+  ("theta" -> lambdaParse("((\\x y -> (y (x x y))) (\\x y -> (y (x x y))))")) // Turing's fixed point combinator
 )
 
 constants += "true" -> lambdaParse("K")
@@ -254,7 +246,7 @@ println(evalStr("(Y K*)"))
 println("> SKK = I")
 println(evalStr("((S K) K)"))
 println("> Church numeral arithmetic, c_15 - c_4 = c_11")
-println(evalStr("((- ((+ 5) 10)) 4)"))
+println(evalStr("(+ (+ 1 2) 3)"))
 println("> 4!")
 println((evalStr(("(fac 4)"))))
 println("> fib 10")
