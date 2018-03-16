@@ -65,7 +65,7 @@ class LAParser(op: String)(p: => Parser[String, Term]) extends Parser[String, Te
       lazy val nextMunch = op ~ p ==> { case (a, b) => b }
       lazy val singleApp = p ~ op ~ p ==> { case ((a, b), c) => App(a, c): Term }
       val initialParsing = for (t <- singleApp.parse(string)) yield t
-      
+
       var accumulator = initialParsing
       var nextApp = Set.empty[(Term, String)]
       var canStillParse = true
