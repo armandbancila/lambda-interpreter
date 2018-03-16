@@ -209,7 +209,7 @@ constants = constants ++ Map(
   ("I" -> lambdaParse("(\\x -> x)")),
   ("K*" -> lambdaParse("(\\x y -> y)")),
   ("Y" -> lambdaParse("(\\f -> ((\\x -> (f (x x))) (\\x -> (f (x x)))))")), // Y combinator
-  ("theta" -> lambdaParse("((\\x y -> (y (x x y))) (\\x y -> (y (x x y))))")) // Turing's fixed point combinator
+  ("Theta" -> lambdaParse("((\\x y -> (y (x x y))) (\\x y -> (y (x x y))))")) // Turing's fixed point combinator
 )
 
 constants += "true" -> lambdaParse("K")
@@ -229,14 +229,12 @@ constants += "*" -> lambdaParse("(\\m n -> (m (+ n) 0))")
 constants += "^" -> lambdaParse("(\\m n -> (m (* n) 1))")
 constants += "isZero" -> lambdaParse("(\\n -> (n (\\x -> false) true))")
 constants += "isOne" -> lambdaParse("(\\n -> (-- n (\\x -> false) true))")
-constants += "fac" -> lambdaParse("(theta (\\f n -> ((isOne n) 1 (* n (f (-- n))))))")
-constants += "fib" -> lambdaParse("(theta (\\f n -> ((isOne n) 1 ((isOne (-- n)) 1 (+ (f (- n 2)) (f (-- n)))))))")
-constants += "div" -> lambdaParse("(\\n -> ((theta (\\c n m f x -> ((\\d -> (((isZero d) ((0 f) x)) (f ((((c d) m) f) x)))) ((- n) m)))) (++ n)))")
+constants += "fac" -> lambdaParse("(Theta (\\f n -> ((isOne n) 1 (* n (f (-- n))))))")
+constants += "fib" -> lambdaParse("(Theta (\\f n -> ((isOne n) 1 ((isOne (-- n)) 1 (+ (f (- n 2)) (f (-- n)))))))")
 constants += "10" -> eval(lambdaParse("((* 5) 2)"))
 constants += "F" -> lambdaParse("(\\a -> (a K I y x))")
 constants += "and" -> lambdaParse("(\\x y -> (x y x))")
 constants += "or" -> lambdaParse("(\\x y -> (x x y))")
-constants += "Theta" -> lambdaParse("(\\x -> (x K S K))")
 
 println("> solution F to (F I) = x, (F K) = y")
 println(evalStr("(F I)"))
