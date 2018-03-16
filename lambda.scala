@@ -114,8 +114,9 @@ lazy val AppParser: Parser[String, Term] = " " * Term
 // terms
 lazy val Term: Parser[String, Term] =
   VarParser || 
+  (("(\\" ~ AbsParser ~ ")") ==> { case ((a, b), c) => b }) ||
   (("(" ~ AppParser ~ ")") ==> { case ((a, b), c) => b }) ||
-  (("(\\" ~ AbsParser ~ ")") ==> { case ((a, b), c) => b })
+  (("(" ~ Term ~ ")") ==> { case ((a, b), c) => b })
 
 def freeVars(term: Term): Set[Term] = term match {
   case Var(_) => Set(term)
@@ -214,7 +215,7 @@ constants = constants ++ Map(
 
 constants += "true" -> lambdaParse("K")
 constants += "false" -> lambdaParse("K*")
-constants += "if" -> lambdaParse("(then else bool -> ((bool then) else))")
+constants += "if" -> lambdaParse("(\\then else bool.((bool then) else))")
 constants += "0" -> lambdaParse("(\\f x.x)")
 constants += "1" -> lambdaParse("(\\f x.(f x))")
 constants += "2" -> lambdaParse("(\\f x.(f (f x)))")
@@ -236,20 +237,16 @@ constants += "F" -> lambdaParse("(\\a.(a K I y x))")
 constants += "and" -> lambdaParse("(\\x y.(x y x))")
 constants += "or" -> lambdaParse("(\\x y.(x x y))")
 
-println("> solution F to (F I) = x, (F K) = y")
+println("> a solution F to (F I) = x, (F K) = y")
 println(evalStr("(F I)"))
 println(evalStr("(F K)"))
-println("> leftmost derivation avoids infinite loop and finds nf")
+println("> other examples:")
 println(evalStr("(Y K*)"))
-println("> SKK = I")
 println(evalStr("((S K) K)"))
-println("> Church numeral arithmetic, c_15 - c_4 = c_11")
 println(evalStr("(+ (+ 1 2) 3)"))
-println("> 4!")
-println((evalStr(("(fac 4)"))))
-println("> fib 10")
+println(termToStr(lambdaParse(("(fac 4)"))))
 println(cnToInt(eval(lambdaParse("(fib 10)"))))
 println(evalStr("((and true) false)"))
 println(evalStr("((or true) false)"))
-println(evalStr("(K K K K K K)"))
+println(evalStr("(S K K S)"))
 
