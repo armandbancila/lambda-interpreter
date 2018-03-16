@@ -87,7 +87,7 @@ case class Abs(parameter: Term, body: Term) extends Term
 var constants: Map[String, Term] = Map()
 
 case object NameParser extends Parser[String, String] {
-  val reg = "[a-zA-Z0-9!$%^&*_+='#~<>./?|-]*".r // allowed variable names
+  val reg = "[a-zA-Z0-9!$%^&*_+='#~<>/?|-]*".r // allowed variable names
   def parse(sb: String) = reg.findPrefixOf(sb) match {
     case None => Set()
     case Some(s) => Set(sb.splitAt(s.length))
@@ -105,7 +105,7 @@ lazy val VarParser: Parser[String, Term] =
 
 // abstractions
 lazy val AbsParser: Parser[String, Term] =
-  VarParser ~ " -> " ~ Term ==> { case ((a, b), c) => Abs(a, c): Term } ||
+  VarParser ~ "." ~ Term ==> { case ((a, b), c) => Abs(a, c): Term } ||
   VarParser ~ " " ~ AbsParser ==> { case ((a, b), c) => Abs(a, c) }
 
 // applications
@@ -191,7 +191,7 @@ def evalStr(input: String): String = termToStr(eval(lambdaParse(input)))
 
 def termToStr(term: Term): String = term match {
   case Var(a) => a
-  case Abs(a, b) => "(" + termToStr(a) + " -> " + termToStr(b) + ")"
+  case Abs(a, b) => "(\\" + termToStr(a) + "." + termToStr(b) + ")"
   case App(a, b) => "(" + termToStr(a) + " " + termToStr(b) + ")"
 }
 
@@ -204,37 +204,37 @@ def cnToInt(term: Term): Int = term match {
 
 // define constants for the language
 constants = constants ++ Map(
-  ("S" -> lambdaParse("(\\x y z -> (x z (y z)))")),
-  ("K" -> lambdaParse("(\\x y -> x)")),
-  ("I" -> lambdaParse("(\\x -> x)")),
-  ("K*" -> lambdaParse("(\\x y -> y)")),
-  ("Y" -> lambdaParse("(\\f -> ((\\x -> (f (x x))) (\\x -> (f (x x)))))")), // Y combinator
-  ("Theta" -> lambdaParse("((\\x y -> (y (x x y))) (\\x y -> (y (x x y))))")) // Turing's fixed point combinator
+  ("S" -> lambdaParse("(\\x y z.(x z (y z)))")),
+  ("K" -> lambdaParse("(\\x y.x)")),
+  ("I" -> lambdaParse("(\\x.x)")),
+  ("K*" -> lambdaParse("(\\x y.y)")),
+  ("Y" -> lambdaParse("(\\f.((\\x.(f (x x))) (\\x.(f (x x)))))")), // Y combinator
+  ("Theta" -> lambdaParse("((\\x y.(y (x x y))) (\\x y.(y (x x y))))")) // Turing's fixed point combinator
 )
 
 constants += "true" -> lambdaParse("K")
 constants += "false" -> lambdaParse("K*")
 constants += "if" -> lambdaParse("(then else bool -> ((bool then) else))")
-constants += "0" -> lambdaParse("(\\f x -> x)")
-constants += "1" -> lambdaParse("(\\f x -> (f x))")
-constants += "2" -> lambdaParse("(\\f x -> (f (f x)))")
-constants += "3" -> lambdaParse("(\\f x -> (f (f (f x))))")
-constants += "4" -> lambdaParse("(\\f x -> (f (f (f (f x)))))")
-constants += "5" -> lambdaParse("(\\f x -> (f (f (f (f (f x))))))")
-constants += "++" ->  lambdaParse("(\\n f x -> (f (n f x)))")
-constants += "--" ->  lambdaParse("(\\n f x -> (((n (\\g h -> (h (g f)))) (\\u -> x)) (\\u -> u)))")
-constants += "+" ->  lambdaParse("(\\m n -> (m ++ n))")
-constants += "-" ->  lambdaParse("(\\m n -> (n -- m))")
-constants += "*" -> lambdaParse("(\\m n -> (m (+ n) 0))")
-constants += "^" -> lambdaParse("(\\m n -> (m (* n) 1))")
-constants += "isZero" -> lambdaParse("(\\n -> (n (\\x -> false) true))")
-constants += "isOne" -> lambdaParse("(\\n -> (-- n (\\x -> false) true))")
-constants += "fac" -> lambdaParse("(Theta (\\f n -> ((isOne n) 1 (* n (f (-- n))))))")
-constants += "fib" -> lambdaParse("(Theta (\\f n -> ((isOne n) 1 ((isOne (-- n)) 1 (+ (f (- n 2)) (f (-- n)))))))")
+constants += "0" -> lambdaParse("(\\f x.x)")
+constants += "1" -> lambdaParse("(\\f x.(f x))")
+constants += "2" -> lambdaParse("(\\f x.(f (f x)))")
+constants += "3" -> lambdaParse("(\\f x.(f (f (f x))))")
+constants += "4" -> lambdaParse("(\\f x.(f (f (f (f x)))))")
+constants += "5" -> lambdaParse("(\\f x.(f (f (f (f (f x))))))")
+constants += "++" ->  lambdaParse("(\\n f x.(f (n f x)))")
+constants += "--" ->  lambdaParse("(\\n f x.(((n (\\g h.(h (g f)))) (\\u.x)) (\\u.u)))")
+constants += "+" ->  lambdaParse("(\\m n.(m ++ n))")
+constants += "-" ->  lambdaParse("(\\m n.(n -- m))")
+constants += "*" -> lambdaParse("(\\m n.(m (+ n) 0))")
+constants += "^" -> lambdaParse("(\\m n.(m (* n) 1))")
+constants += "isZero" -> lambdaParse("(\\n.(n (\\x.false) true))")
+constants += "isOne" -> lambdaParse("(\\n.(-- n (\\x.false) true))")
+constants += "fac" -> lambdaParse("(Theta (\\f n.((isOne n) 1 (* n (f (-- n))))))")
+constants += "fib" -> lambdaParse("(Theta (\\f n.((isOne n) 1 ((isOne (-- n)) 1 (+ (f (- n 2)) (f (-- n)))))))")
 constants += "10" -> eval(lambdaParse("((* 5) 2)"))
-constants += "F" -> lambdaParse("(\\a -> (a K I y x))")
-constants += "and" -> lambdaParse("(\\x y -> (x y x))")
-constants += "or" -> lambdaParse("(\\x y -> (x x y))")
+constants += "F" -> lambdaParse("(\\a.(a K I y x))")
+constants += "and" -> lambdaParse("(\\x y.(x y x))")
+constants += "or" -> lambdaParse("(\\x y.(x x y))")
 
 println("> solution F to (F I) = x, (F K) = y")
 println(evalStr("(F I)"))
