@@ -26,13 +26,13 @@ EBNF Grammar:
 ## Examples:
 - 2^10 with Church numerals
 
-input:  `println(cnToInt(evalStr("((^ 10) 2)")))`
+input:  `println(cnToInt(evalStr("(^ 10 2)")))`
 
 output: `1024`
 
 - SKK = I
 
-input:  `println(evalStr("((S K) K)"))`
+input:  `println(evalStr("(S K K)"))`
 
 output: `(\z.z)`
 
