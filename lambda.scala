@@ -105,18 +105,18 @@ lazy val VarParser: Parser[String, Term] =
 
 // abstractions
 lazy val AbsParser: Parser[String, Term] =
-  VarParser ~ "." ~ Term ==> { case ((a, b), c) => Abs(a, c): Term } ||
+  VarParser ~ "." ~ TermParser ==> { case ((a, b), c) => Abs(a, c): Term } ||
   VarParser ~ " " ~ AbsParser ==> { case ((a, b), c) => Abs(a, c) }
 
 // applications
-lazy val AppParser: Parser[String, Term] = " " * Term
+lazy val AppParser: Parser[String, Term] = " " * TermParser
 
 // terms
-lazy val Term: Parser[String, Term] =
+lazy val TermParser: Parser[String, Term] =
   VarParser || 
   (("(\\" ~ AbsParser ~ ")") ==> { case ((a, b), c) => b }) ||
   (("(" ~ AppParser ~ ")") ==> { case ((a, b), c) => b }) ||
-  (("(" ~ Term ~ ")") ==> { case ((a, b), c) => b })
+  (("(" ~ TermParser ~ ")") ==> { case ((a, b), c) => b })
 
 def freeVars(term: Term): Set[Term] = term match {
   case Var(_) => Set(term)
@@ -185,7 +185,7 @@ def eval(input: Term): Term = {
 }
 
 // parse a string representation of a term into a Term
-def lambdaParse(input: String): Term = Term.parse_all(input).head
+def lambdaParse(input: String): Term = TermParser.parse_all(input).head
 
 // evaluate a term in a string by parsing & beta-reducing it repeatedly
 def evalStr(input: String): String = termToStr(eval(lambdaParse(input)))
