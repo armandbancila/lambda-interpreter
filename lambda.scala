@@ -114,7 +114,7 @@ lazy val AppParser: Parser[String, Term] = " " * TermParser
 // terms
 lazy val TermParser: Parser[String, Term] =
   VarParser || 
-  (("(\\" ~ AbsParser ~ ")") ==> { case ((a, b), c) => b }) ||
+  (("\\" ~ AbsParser) ==> { case (a, b) => b }) ||
   (("(" ~ AppParser ~ ")") ==> { case ((a, b), c) => b }) ||
   (("(" ~ TermParser ~ ")") ==> { case ((a, b), c) => b })
 

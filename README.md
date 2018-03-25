@@ -3,7 +3,7 @@ Lambda calculus parser and interpreter with capture avoiding substitution. Evalu
 
 EBNF Grammar:
     
-	Term := Variable | "(\" . Abstraction . ")" | "(" . Application . ")" | "(" . Term . ")"
+	Term := Variable | "\" . Abstraction | "(" . Application . ")" | "(" . Term . ")"
     
 	Variable := < letters, numbers, symbols, etc. and can represent a constant, like "Y" >
     
